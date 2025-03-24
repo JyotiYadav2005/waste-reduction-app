@@ -9,6 +9,7 @@ import RecyclingCenters from "./pages/RecyclingCenters";
 import SideBar from "./components/SideBar";
 import { AuthProvider } from "./AuthContext";
 import PrivateRoute from "./components/PrivateRoute";
+import SanitationWorkers from "./components/SanitationWorkers";
 
 const App = () => {
   return (
@@ -45,6 +46,7 @@ const App = () => {
               </PrivateRoute>
             }
           />
+          <Route path="/sanitation-workers" element={<SanitationWorkers />} />
         </Routes>
       </Router>
     </AuthProvider>

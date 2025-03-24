@@ -10,6 +10,7 @@ import {
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import RecyclingIcon from "@mui/icons-material/Recycling";
+import CleaningServicesIcon from "@mui/icons-material/CleaningServices";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import { Link, useNavigate } from "react-router-dom";
 import { auth } from "../firebaseConfig";
@@ -44,6 +45,13 @@ const SideBar = () => {
             <RecyclingIcon />
           </ListItemIcon>
           <ListItemText primary="Recycling Centers" />
+        </ListItem>
+
+        <ListItem component={Link} to="/sanitation-workers">
+          <ListItemIcon>
+            <CleaningServicesIcon />
+          </ListItemIcon>
+          <ListItemText primary="Sanitation Workers" />
         </ListItem>
 
         <ListItem>

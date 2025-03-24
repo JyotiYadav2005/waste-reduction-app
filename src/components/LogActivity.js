@@ -25,41 +25,34 @@ const LogActivity = () => {
     e.preventDefault();
     if (!wasteType || !amount) return alert("Please enter waste details");
 
-    const wasteAmount = parseFloat(amount);
-    if (wasteAmount <= 0) return alert("Amount must be greater than zero");
-
     try {
-      // ✅ Step 1: Log waste in `wasteData` collection
+      const user = auth.currentUser;
+      if (!user) return;
+
+      // Add waste entry
       await addDoc(collection(db, "wasteData"), {
-        userId: auth.currentUser.uid,
+        userId: user.uid,
         wasteType,
-        amount: wasteAmount,
+        amount: parseFloat(amount),
         date: serverTimestamp(),
       });
 
-      // ✅ Step 2: Update points & total waste in `users` collection
-      const userRef = doc(db, "users", auth.currentUser.uid);
+      // Update points
+      const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
+      let currentPoints = userSnap.exists() ? userSnap.data().points || 0 : 0;
 
-      if (userSnap.exists()) {
-        const userData = userSnap.data();
-        const earnedPoints = wasteAmount * 10; // 🎯 1 kg = 10 points
+      const earnedPoints = parseFloat(amount) * 10;
 
-        await updateDoc(userRef, {
-          points: (userData.points || 0) + earnedPoints,
-          totalWasteLogged: (userData.totalWasteLogged || 0) + wasteAmount,
-        });
+      await updateDoc(userRef, {
+        points: currentPoints + earnedPoints,
+      });
 
-        alert(`Waste logged successfully! You earned ${earnedPoints} points.`);
-      } else {
-        alert("User data not found!");
-      }
-
-      // Reset fields
+      alert(`Waste logged successfully! You earned ${earnedPoints} points.`);
       setWasteType("");
       setAmount("");
     } catch (err) {
-      console.error("Error logging waste:", err);
+      console.error(err);
       alert("Error logging waste");
     }
   };

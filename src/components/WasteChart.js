@@ -1,14 +1,6 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { db, auth } from "../firebaseConfig";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
-import {
-  Box,
-  Paper,
-  Typography,
-  List,
-  ListItem,
-  ListItemText,
-} from "@mui/material";
 import {
   BarChart,
   Bar,
@@ -18,10 +10,10 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { Typography, Paper, Box } from "@mui/material";
 
 const WasteChart = () => {
-  const [data, setData] = useState([]);
-  const [insights, setInsights] = useState([]);
+  const [wasteData, setWasteData] = useState([]);
 
   useEffect(() => {
     const user = auth.currentUser;
@@ -31,90 +23,44 @@ const WasteChart = () => {
       collection(db, "wasteData"),
       where("userId", "==", user.uid)
     );
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const chartData = {};
-      let totalWaste = 0;
-
-      snapshot.forEach((doc) => {
-        const { wasteType, amount } = doc.data();
-        chartData[wasteType] = (chartData[wasteType] || 0) + amount;
-        totalWaste += amount;
-      });
-
-      const formattedData = Object.keys(chartData).map((type) => ({
-        wasteType: type,
-        amount: chartData[type],
+      const rawData = snapshot.docs.map((doc) => ({
+        ...doc.data(),
       }));
 
-      setData(formattedData);
-      generateInsights(chartData, totalWaste);
+      // **Group waste data by type**
+      const groupedData = rawData.reduce((acc, entry) => {
+        const { wasteType, amount } = entry;
+        if (!acc[wasteType]) {
+          acc[wasteType] = { wasteType, amount: 0 };
+        }
+        acc[wasteType].amount += amount;
+        return acc;
+      }, {});
+
+      setWasteData(Object.values(groupedData)); // Convert object to array for Recharts
     });
 
     return () => unsubscribe();
   }, []);
 
-  // Generate insights based on waste data
-  const generateInsights = (wasteData, totalWaste) => {
-    const newInsights = [];
-
-    if (wasteData["Plastic"] > 5) {
-      newInsights.push(
-        "You generate a lot of plastic waste. Try using reusable bottles and bags."
-      );
-    }
-    if (wasteData["Organic"] > 5) {
-      newInsights.push(
-        "Consider composting your organic waste to reduce landfill impact."
-      );
-    }
-    if (wasteData["Metal"] > 3) {
-      newInsights.push(
-        "Recycling metal can save energy. Look for local recycling programs."
-      );
-    }
-    if (totalWaste > 10) {
-      newInsights.push(
-        "You have a high waste output. Try reducing single-use items."
-      );
-    }
-
-    setInsights(newInsights);
-  };
-
   return (
-    <Paper elevation={2} sx={{ padding: 3, borderRadius: 3 }}>
+    <Paper elevation={3} sx={{ padding: 3, borderRadius: 3 }}>
       <Typography variant="h5" fontWeight="bold" gutterBottom>
-        Waste Statistics
+        Your Waste Statistics
       </Typography>
       <Box sx={{ width: "100%", height: 300 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data}>
+          <BarChart data={wasteData}>
             <XAxis dataKey="wasteType" />
             <YAxis />
             <Tooltip />
             <Legend />
-            <Bar dataKey="amount" fill="#82ca9d" />
+            <Bar dataKey="amount" fill="#4caf50" />
           </BarChart>
         </ResponsiveContainer>
       </Box>
-
-      {/* Waste Reduction Insights */}
-      <Typography variant="h6" fontWeight="bold" mt={3}>
-        Waste Reduction Insights
-      </Typography>
-      {insights.length > 0 ? (
-        <List>
-          {insights.map((tip, index) => (
-            <ListItem key={index}>
-              <ListItemText primary={`✅ ${tip}`} />
-            </ListItem>
-          ))}
-        </List>
-      ) : (
-        <Typography>
-          No insights available yet. Log more waste to get recommendations!
-        </Typography>
-      )}
     </Paper>
   );
 };

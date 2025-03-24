@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+
 const firebaseConfig = {
   apiKey: "AIzaSyAD2PWJwI-cy52qdRtPX2WV3BgSG5pCmmg",
   authDomain: "waste-reduction-app-218ca.firebaseapp.com",

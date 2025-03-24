@@ -1,72 +1,71 @@
 import { useState, useEffect } from "react";
 import { db } from "../firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  CircularProgress,
-  Container,
-} from "@mui/material";
+import { Card, CardContent, Typography, Container, Grid } from "@mui/material";
 
 const RecyclingCenters = () => {
   const [centers, setCenters] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchRecyclingCenters = async () => {
+    const fetchCenters = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "recyclingCenters"));
-        const centerList = querySnapshot.docs.map((doc) => doc.data());
-        setCenters(centerList);
-        setLoading(false);
+        const centersList = querySnapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            location: data.location?._lat
+              ? `${data.location._lat}, ${data.location._long}`
+              : "Location not available", // Convert GeoPoint to string
+          };
+        });
+        setCenters(centersList);
       } catch (error) {
         console.error("Error fetching recycling centers:", error);
-        setLoading(false);
       }
     };
 
-    fetchRecyclingCenters();
+    fetchCenters();
   }, []);
 
   return (
-    <Container>
-      <Typography variant="h4" fontWeight="bold" mb={3}>
+    <Container maxWidth="lg">
+      <Typography
+        variant="h4"
+        textAlign="center"
+        fontWeight="bold"
+        mt={4}
+        mb={3}
+      >
         ♻️ Nearby Recycling Centers
       </Typography>
-
-      {loading ? (
-        <CircularProgress />
-      ) : (
-        <Box
-          sx={{
-            display: "grid",
-            gap: 3,
-            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-          }}
-        >
-          {centers.length > 0 ? (
-            centers.map((center, index) => (
-              <Card key={index} sx={{ borderRadius: 2, boxShadow: 2 }}>
+      <Grid container spacing={3}>
+        {centers.length > 0 ? (
+          centers.map((center) => (
+            <Grid item xs={12} sm={6} md={4} key={center.id}>
+              <Card sx={{ background: "#e0f7fa", textAlign: "center", p: 2 }}>
                 <CardContent>
-                  <Typography variant="h6" fontWeight="bold">
+                  <Typography variant="h6" fontWeight="bold" color="primary">
                     {center.name}
                   </Typography>
-                  <Typography variant="body2">{center.address}</Typography>
-                  <Typography variant="body2" fontStyle="italic">
-                    Contact: {center.contact}
+                  <Typography variant="body1" color="textSecondary">
+                    📍 {center.location}
+                  </Typography>
+
+                  <Typography variant="body1" mt={1}>
+                    📞 Contact: {center.contact || "N/A"}
                   </Typography>
                 </CardContent>
               </Card>
-            ))
-          ) : (
-            <Typography>
-              No recycling centers found. Add some data in Firebase!
-            </Typography>
-          )}
-        </Box>
-      )}
+            </Grid>
+          ))
+        ) : (
+          <Typography textAlign="center" width="100%" mt={4}>
+            No recycling centers available.
+          </Typography>
+        )}
+      </Grid>
     </Container>
   );
 };
